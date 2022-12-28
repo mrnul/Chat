@@ -21,6 +21,3 @@ The next n bytes are the json data
 # Client side
 1. Client connects and waits for server to send the newly assigned uid
 2. Client waits for all other incoming data and is ready to send data
-
-
-# Raw 
