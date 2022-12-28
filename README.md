@@ -1,7 +1,9 @@
 # Chat
-Chat client and server using pyside6 and a simple protocol that is described below.
+Chat client and server using pyside6. Communication between Server and Client is done using simple json format.
 
-Communication between Server and Client is done using simple json format.
+The first 4 bytes represend the length (n) of json data in bytes
+
+The next n bytes are the json data
 
 # Server side
 1. Server waits for connection
@@ -19,3 +21,6 @@ Communication between Server and Client is done using simple json format.
 # Client side
 1. Client connects and waits for server to send the newly assigned uid
 2. Client waits for all other incoming data and is ready to send data
+
+
+# Raw 
