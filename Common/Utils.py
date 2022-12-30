@@ -28,6 +28,9 @@ def bytes_to_uint32(data: bytes) -> int:
 
 
 def send_json_data(s: socket.socket, data: dict) -> bool:
+    if s is None or data is None:
+        return False
+
     data_bytes = bytes(json.dumps(data), encoding='utf-8', errors='ignore')
     length = len(data_bytes)
     length_bytes = length.to_bytes(4, byteorder='little', signed=False)
@@ -42,6 +45,8 @@ def send_json_data(s: socket.socket, data: dict) -> bool:
 
 
 def receive_json_data(s: socket.socket, max_size: int):
+    if s is None:
+        return None
     data_length = bytes_to_uint32(receive_n_bytes(s, 4))
     if data_length == 0 or data_length > max_size:
         return None
