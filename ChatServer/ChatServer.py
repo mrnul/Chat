@@ -9,16 +9,19 @@ MAX_DATA_SIZE = 1024 * 1024
 
 
 class ChatServer:
+    client_lock: threading.Lock = None
+    print_lock: threading.Lock = None
     server: socket.socket = None
     clients: dict = {}
 
     def send_whole_client_list(self, client_socket: socket.socket):
-        client_list = {
-            'clients': [{
-                'id': client_id,
-                'name': self.clients[client_id].get('name')
-            } for client_id in self.clients]
-        }
+        with self.client_lock:
+            client_list = {
+                'clients': [{
+                    'id': client_id,
+                    'name': self.clients[client_id].get('name')
+                } for client_id in self.clients]
+            }
         Utils.send_json_data(client_socket, client_list)
 
     def send_client_update(self, client_id: int, info: str):
@@ -27,8 +30,9 @@ class ChatServer:
             'name': self.clients[client_id].get('name'),
             'info': info
         }
-        for client in self.clients:
-            Utils.send_json_data(self.clients[client]['socket'], update_data)
+        with self.client_lock:
+            for client in self.clients:
+                Utils.send_json_data(self.clients[client]['socket'], update_data)
 
     def send_client_id(self, client_id: int):
         update_data = {
@@ -61,9 +65,11 @@ class ChatServer:
             self.clients[client_id]['socket'].close()
             self.send_client_update(client_id, 'delete')
             self.clients.pop(client_id)
-            print(f'- {client_id} ({len(self.clients)})')
-        except (Exception,):
-            pass
+            with self.print_lock:
+                print(f'- {client_id} ({len(self.clients)})')
+        except Exception as e:
+            with self.print_lock:
+                print(f'cleanup: {e}')
 
     def start_serving(self, ip: str, port: int):
         def client_thread(cid: int, client_socket: socket.socket):
@@ -87,7 +93,8 @@ class ChatServer:
         self.server = socket.socket()
         self.server.bind((ip, port))
         self.server.listen()
-
+        self.client_lock = threading.Lock()
+        self.print_lock = threading.Lock()
         while True:
             try:
                 sock, _ = self.server.accept()
@@ -95,8 +102,10 @@ class ChatServer:
                 client_id = uuid.uuid1().int
                 self.clients[client_id] = {'socket': sock}
 
-                print(f'+ {client_id} ({len(self.clients)})')
+                with self.print_lock:
+                    print(f'+ {client_id} ({len(self.clients)})')
 
                 threading.Thread(target=client_thread, args=(client_id, sock)).start()
-            except ssl.SSLError as e:
-                print(e)
+            except Exception as e:
+                with self.print_lock:
+                    print(f'start_serving: {e}')
