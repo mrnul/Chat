@@ -1,4 +1,5 @@
 # Chat
+
 Chat client and server using pyside6. Communication between Server and Client is done using simple json format.
 
 The first 4 bytes represend the length (n) of json data in bytes
